@@ -33,35 +33,41 @@
             gap: 30px;
         }
 
-        .left-panel, .right-panel {
+        .left-panel {
+            width: 400px;
+            min-width: 300px;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(14px);
+            border-radius: 18px;
+            padding: 35px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel {
             flex: 1;
             background: rgba(255,255,255,0.12);
             backdrop-filter: blur(14px);
             border-radius: 18px;
             padding: 35px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+            display: flex;
+            flex-direction: column;
         }
 
-        .left-panel h1 {
-            text-align: center;
-            margin-bottom: 25px;
-            font-weight: 700;
-        }
-
-        label {
-            font-weight: 600;
+        .response-box {
+            flex: 1;
+            background: rgba(255,255,255,0.15);
+            border-radius: 14px;
+            padding: 20px;
+            overflow-y: auto;
+            white-space: pre-wrap;
             font-size: 15px;
-        }
-
-        input.form-control {
-            height: 50px;
-        }
-
-        #signature {
-            height: 120px; 
-            padding-top: 10px;
-            padding-left: 15px;
-            resize: none;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.25);
+            word-break: break-all;
         }
 
         .btn-submit {
@@ -79,53 +85,22 @@
         .btn-submit:hover {
             background: #ffe95c;
         }
-        .split-container {
-            display: flex;
-            height: 100%;
+
+        .btn-clear {
             width: 100%;
-            padding: 30px;
-            gap: 30px;
+            margin-top: 10px;
+            height: 45px;
+            border-radius: 10px;
+            border: none;
+            background: #ff4d4d;
+            font-weight: bold;
+            color: white;
+            transition: 0.3s;
         }
 
-        .left-panel {
-            width: 400px; /* fixed width for form */
-            min-width: 300px;
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(14px);
-            border-radius: 18px;
-            padding: 35px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
-            flex-shrink: 0; /* prevent shrinking */
-            display: flex;
-            flex-direction: column;
+        .btn-clear:hover {
+            background: #ff7777;
         }
-
-        .right-panel {
-            flex: 1; /* takes remaining space */
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(14px);
-            border-radius: 18px;
-            padding: 35px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .response-box {
-            flex: 1; /* fill right-panel space */
-            background: rgba(255,255,255,0.15);
-            border-radius: 14px;
-            padding: 20px;
-            overflow-y: auto; /* scroll long content */
-            white-space: pre-wrap;
-            font-size: 15px;
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.25);
-        }
-        .response-box {
-            word-break: break-all;
-        }
-
     </style>
 </head>
 
@@ -138,8 +113,6 @@
         <h1>Midknight Donate To</h1>
 
         <form id="donateForm">
-            @csrf
-
             <div class="mb-3">
                 <label>Donate To Address</label>
                 <input type="text" name="donate_to_address" id="donate_to_address" class="form-control" placeholder="Enter Donate To Address">
@@ -156,20 +129,72 @@
             </div>
 
             <button type="submit" class="btn-submit mt-3">Submit</button>
+            <button type="button" class="btn-clear" id="clearBtn">Clear</button>
         </form>
     </div>
 
 
     <!-- RIGHT SIDE: RESPONSE -->
     <div class="right-panel">
-        <div class="response-title">Response Output</div>
-
-        <div id="responseBox" class="response-box">
-            <!-- Response will show here -->
-        </div>
+        <h4>Response Output</h4>
+        <div id="responseBox" class="response-box"></div>
     </div>
 
 </div>
+
+<script>
+document.getElementById("donateForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const donate_to = document.getElementById("donate_to_address").value.trim();
+    const donor = document.getElementById("donor_address").value.trim();
+    const signature = document.getElementById("signature").value.trim();
+    const responseBox = document.getElementById("responseBox");
+
+    // VALIDATION LIKE LARAVEL
+    let errors = [];
+
+    if (!donate_to) errors.push("Donate To Address is required.");
+    if (!donor) errors.push("Donor Address is required.");
+    if (!signature) errors.push("Signature is required.");
+
+    if (errors.length > 0) {
+        responseBox.innerText = "Validation Failed:\n" + errors.join("\n");
+        return;
+    }
+
+    const url = `https://scavenger.prod.gd.midnighttge.io/donate_to/${donate_to}/${donor}/${signature}`;
+
+    responseBox.innerText = "Processing request...\nURL: " + url;
+
+    try {
+        const requestOptions = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}"
+        };
+
+        const res = await fetch(url, requestOptions);
+        const data = await res.json();
+
+        responseBox.innerText =
+            "Success: " + (res.ok ? "true" : "false") +
+            "\nStatus: " + res.status +
+            "\nURL Called: " + url +
+            "\n\nResponse:\n" + JSON.stringify(data, null, 4);
+
+    } catch (error) {
+        responseBox.innerText = "Error:\n" + error.message;
+    }
+});
+
+
+// CLEAR BUTTON
+document.getElementById("clearBtn").addEventListener("click", function() {
+    document.getElementById("donateForm").reset();
+    document.getElementById("responseBox").innerText = "";
+});
+</script>
 
 </body>
 </html>
