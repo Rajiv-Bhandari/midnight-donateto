@@ -151,7 +151,6 @@ document.getElementById("donateForm").addEventListener("submit", async function(
     const signature = document.getElementById("signature").value.trim();
     const responseBox = document.getElementById("responseBox");
 
-    // VALIDATION LIKE LARAVEL
     let errors = [];
 
     if (!donate_to) errors.push("Donate To Address is required.");
@@ -163,31 +162,31 @@ document.getElementById("donateForm").addEventListener("submit", async function(
         return;
     }
 
-    const url = `https://scavenger.prod.gd.midnighttge.io/donate_to/${donate_to}/${donor}/${signature}`;
-
-    responseBox.innerText = "Processing request...\nURL: " + url;
+    responseBox.innerText = "Processing request...\n";
 
     try {
-        const requestOptions = {
+        const res = await fetch("/api/donate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: "{}"
-        };
+            body: JSON.stringify({
+                donate_to,
+                donor,
+                signature
+            })
+        });
 
-        const res = await fetch(url, requestOptions);
         const data = await res.json();
 
         responseBox.innerText =
-            "Success: " + (res.ok ? "true" : "false") +
-            "\nStatus: " + res.status +
-            "\nURL Called: " + url +
-            "\n\nResponse:\n" + JSON.stringify(data, null, 4);
+            "Success: " + data.success +
+            "\nStatus: " + data.status +
+            "\nURL Called: " + data.url_called +
+            "\n\nResponse:\n" + JSON.stringify(data.response, null, 4);
 
     } catch (error) {
         responseBox.innerText = "Error:\n" + error.message;
     }
 });
-
 
 // CLEAR BUTTON
 document.getElementById("clearBtn").addEventListener("click", function() {
